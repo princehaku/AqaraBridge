@@ -26,10 +26,10 @@ _LOGGER = logging.getLogger(__name__)
 
 def __init_rocketmq():
     import platform, os
-    fp = "%s/custom_components/aqara_bridge/3rd_libs/%s/librocketmq.so" % (os.path.abspath('.'), platform.machine())
+    fp = "%s/custom_components/aqara_bridge/lib-rocketmq/%s/librocketmq.so" % (os.path.abspath('.'), platform.machine())
     if platform.system() != "Linux" or not os.path.exists(fp):
         _LOGGER.error(f"AqaraBridge need rocketmq, you need install it. Not Fund librocketmq from %s." % fp)
-        return 
+        return
     target_p = "/usr/local/lib/librocketmq.so"
     if not os.path.exists(target_p):
         import shutil
@@ -37,10 +37,11 @@ def __init_rocketmq():
         shutil.copyfile(fp, target_p)
 
 try:
-    from rocketmq.client import PushConsumer, RecvMessage
+    from rocketmq.client import PushConsumer, ConsumeStatus, ReceivedMessage
+    _LOGGER.warning("init librocketmq ok")
 except:
     __init_rocketmq()
-    from rocketmq.client import PushConsumer, RecvMessage
+    from rocketmq.client import PushConsumer, ConsumeStatus, ReceivedMessage
 
 class AiotDevice:
     def __init__(self, **kwargs):
@@ -71,7 +72,7 @@ class AiotDevice:
     @property
     def is_supported(self):
         return self.platforms is not None
-    
+
     def get_resource_name(self, resource_id):
         for r in self.resource_names:
             if r['resourceId'] == resource_id:
@@ -94,13 +95,13 @@ class AiotEntityBase(Entity):
             resource_name = device.get_resource_name(resource_id)
             if resource_name is not None:
                  self._attr_name = resource_name
-        
+
         if self._position_name is not None:
             self._attr_name = "%s-%s" % (self._position_name, self._attr_name)
 
         # 按键通道，多按键参数
         self._channel = channel
-        
+
         self._attr_should_poll = False
         self._attr_firmware_version = device.firmware_version
         # Zigbee信号强度
@@ -119,7 +120,7 @@ class AiotEntityBase(Entity):
         if channel:
             self._attr_unique_id = f"{self._attr_unique_id}_{channel}"
             self.entity_id = f"{self.entity_id}_{channel}"
-    
+
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device.did)},
             name=self._attr_name,
@@ -162,7 +163,7 @@ class AiotEntityBase(Entity):
     def firmware_version(self):
         """Return firmware version."""
         return self._attr_firmware_version
-    
+
     @property
     def position_name(self):
         return self._position_name
@@ -219,7 +220,7 @@ class AiotEntityBase(Entity):
                 res_ids.append(self.get_res_id_by_name(k))
                 for k, v in self._res_params.items()
             ]
-        
+
         return await self._aiot_manager.session.async_query_resource_history(
             self.device.did, res_ids,page_size=page_size
         )
@@ -301,7 +302,7 @@ class AiotEntityBase(Entity):
         return await self._aiot_manager.session.async_query_ir_learnresult(
             self.device.did, keyid
         )
-    
+
     def convert_attr_to_res(self, res_name, attr_value):
         """从attr转换到res"""
         return attr_value
@@ -343,16 +344,17 @@ class AiotMessageHandler:
         self._key_id = key_id
         self._loop = loop
         self._consumer = PushConsumer(app_id)
-        self._consumer.set_namesrv_addr(self._server)
+        self._consumer.set_name_server_address(self._server)
         self._consumer.set_session_credentials(key_id, app_key, "")
 
     def start(self, callback):
-        def consumer_callback(msg: RecvMessage):
+        def consumer_callback(msg: ReceivedMessage) -> ConsumeStatus:
             asyncio.set_event_loop(self._loop)
             asyncio.run_coroutine_threadsafe(
                 callback(json.loads(str(msg.body, "utf-8"))),
                 self._loop,
             )
+            return ConsumeStatus.CONSUME_SUCCESS
 
         self._consumer.subscribe(self._app_id, consumer_callback)
         self._consumer.start()
@@ -498,7 +500,7 @@ class AiotManager:
             if self._managed_devices[x].is_supported:
                 for i in range(len(self._managed_devices[x].platforms)):
                     platforms.extend(self._managed_devices[x].platforms[i].keys())
-        
+
         self._hass.async_create_task(
                 self._hass.config_entries.async_forward_entry_setups(config_entry, set(platforms))
             )

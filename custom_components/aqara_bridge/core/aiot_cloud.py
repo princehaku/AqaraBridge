@@ -68,7 +68,7 @@ class AiotCloud:
 
     def get_app_id(self):
         return self.app_id
-    
+
     def get_key_id(self):
         return self.key_id
 
@@ -77,7 +77,7 @@ class AiotCloud:
 
     def set_app_id(self, app_id: str):
         self.app_id = app_id
-    
+
     def set_key_id(self, key_id: str):
         self.key_id = key_id
 
@@ -267,7 +267,7 @@ class AiotCloud:
             subjectId=subject_id, resourceIds=resource_ids,
             startTime=startTime ,endTime=endTime, size=page_size
         )
-    
+
     async def async_query_resource_name(self, subjectIds: list):
         """查询资源名称"""
         return await self._async_invoke_aqara_cloud_api(
@@ -348,7 +348,7 @@ class AiotCloud:
             intent="query.ir.learnResult",
             resources=[{"subjectId": subject_id, "keyId": keyid}]
         )
-    
+
     async def async_query_position_detail(self, positionIds: list):
         """查询位置信息"""
         return await self._async_invoke_aqara_cloud_api(
