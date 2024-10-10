@@ -9,8 +9,22 @@
 
 申请AqaraIOT开发者：[Aqara IoT Cloud](https://developer.aqara.com/register).
 
-* 提示：如果在安装过程中出现此集成不支持通过UI配置，大概率是因为rocketmq的链接库不存在，当前版本仅自动集成了x86和arm64。
-* 当前支持通过hacs商店进行配置，自定义存储库URL: meishild/AqaraBridge
+* 提示：如果在安装过程中出现此集成不支持通过UI配置，大概率是因为rocketmq的链接库不存在，当前版本仅自动集成了x86和arm64。如果使用docker官方镜像,参考如下build脚本
+```dockerfile
+FROM ghcr.io/home-assistant/home-assistant:stable
+RUN apk add libevent openssl git && \
+    pip3 install aliyun-python-sdk-alidns aliyun-python-sdk-core==2.14.0 rocketmq-client-python==2.0.0
+
+#    apk add vim cmake automake make autoconf gcc g++ boost boost-dev libtool openssl-dev bzip2-dev zlib-dev
+
+COPY run.sh /home/admin/hass/bin/run.sh
+COPY lib-rocketmq/aarch64/librocketmq.so /usr/local/lib/librocketmq.so
+
+RUN chmod +x /home/admin/hass/bin/run.sh
+VOLUME ["/config/"]
+CMD ["/home/admin/hass/bin/run.sh"]
+```
+* 当前支持通过hacs商店进行配置，自定义存储库URL: princehaku/AqaraBridge
 
 重点提示：
 * 需要自己申请aqara的开发者账号，使用插件自带的信息会导致状态丢失。
@@ -20,7 +34,11 @@
 * 消息查看：如果需要确认消息可以将这个插件的日志级别改成info可以查看对应消息情况。
 
 ## 版本修订
-当前版本V2.0.3修复大部分错误为当前最稳定版本，后续小问题修复延迟合并，主要通过dev2.0分支进行修改。
+当前版本V2.0.5
+
+v2.0.5
+* 支持vrf, 窗帘等设备
+* 增加hass官方docker镜像内的支持
 
 V2.0.3
 * 修复开发者配置问题，可以使用自己开发者信息。
