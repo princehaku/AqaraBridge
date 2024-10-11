@@ -37,11 +37,11 @@ def __init_rocketmq():
         shutil.copyfile(fp, target_p)
 
 try:
-    from rocketmq.client import PushConsumer, ConsumeStatus, ReceivedMessage
+    from rocketmq.client import PushConsumer, RecvMessage
     _LOGGER.warning("init librocketmq ok")
 except:
     __init_rocketmq()
-    from rocketmq.client import PushConsumer, ConsumeStatus, ReceivedMessage
+    from rocketmq.client import PushConsumer, RecvMessage
 
 class AiotDevice:
     def __init__(self, **kwargs):
@@ -344,17 +344,16 @@ class AiotMessageHandler:
         self._key_id = key_id
         self._loop = loop
         self._consumer = PushConsumer(app_id)
-        self._consumer.set_name_server_address(self._server)
+        self._consumer.set_namesrv_addr(self._server)
         self._consumer.set_session_credentials(key_id, app_key, "")
 
     def start(self, callback):
-        def consumer_callback(msg: ReceivedMessage) -> ConsumeStatus:
+        def consumer_callback(msg: RecvMessage):
             asyncio.set_event_loop(self._loop)
             asyncio.run_coroutine_threadsafe(
                 callback(json.loads(str(msg.body, "utf-8"))),
                 self._loop,
             )
-            return ConsumeStatus.CONSUME_SUCCESS
 
         self._consumer.subscribe(self._app_id, consumer_callback)
         self._consumer.start()
