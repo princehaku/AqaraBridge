@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 import traceback
 
 from typing import Optional, Union
@@ -78,6 +79,13 @@ class AiotDevice:
             if r['resourceId'] == resource_id:
                return r['name']
 
+    def toJSON(self):
+        return json.dumps(
+            self,
+            default=lambda o: o.__dict__,
+            sort_keys=True,
+            indent=4)
+
 class AiotEntityBase(Entity):
     def __init__(self, hass, device, res_params, type_name, channel=None, **kwargs):
         self.hass = hass
@@ -96,8 +104,17 @@ class AiotEntityBase(Entity):
             if resource_name is not None:
                  self._attr_name = resource_name
 
+        # 可按实体 位置-设备名的模式 自动 重设位置
+        pattern = re.compile(r"(\S*?)-(\S*)")
+        if pattern.match(self._attr_name) is not None:
+            self._position_name = pattern.match(self._attr_name).group(1)
+            self._attr_name = pattern.match(self._attr_name).group(2)
+
         if self._position_name is not None:
-            self._attr_name = "%s-%s" % (self._position_name, self._attr_name)
+            if self._attr_name.find(self._position_name) == -1:
+                self._attr_name = "%s-%s" % (self._position_name, self._attr_name)
+            else:
+                self._attr_name = "%s-%s" % (self._position_name, self._attr_name.replace(self._position_name, ""))
 
         # 按键通道，多按键参数
         self._channel = channel
@@ -554,7 +571,9 @@ class AiotManager:
                             **params[j].get(MK_INIT_PARAMS) or {},
                         )
                         self._devices_entities[device.did].append(instance)
+
                         entities.append(instance)
+
             else:
                 for i in range(len(params)):
                     attr = params[i].get(MK_INIT_PARAMS)[MK_HASS_NAME]
@@ -569,6 +588,7 @@ class AiotManager:
                     )
                     self._devices_entities[device.did].append(instance)
                     entities.append(instance)
+
         async_add_entities(entities, update_before_add=True)
 
     async def async_remove_entry(self, config_entry):

@@ -884,7 +884,9 @@ AIOT_DEVICE_MAPPING = [
                         "min_temp": 16,
                         "max_temp": 30,
                     },
-                    MK_RESOURCES: {"ac_state": ("14.{}.85", "_state_str")},
+                    MK_RESOURCES: {
+                        "ac_state": ("14.{}.85", "_state_str")
+                    },
                 }
             }
         ]
@@ -928,7 +930,6 @@ SPECIAL_DEVICES_INFO = {
         },
         "fan_mode": {0: "low", 1: "middle", 2: "high", 3: "auto"},
         "swing_mode": {0: "horizontal", 1: "vertical", 2: "both"},
-        "swing_toggle": {1: "off"},
-        "temperature": {243: "up", 244: "down"}
+        "swing_toggle": {1: "off"}
     }
 }

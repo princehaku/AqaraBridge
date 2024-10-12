@@ -1,3 +1,4 @@
+import json
 import logging
 from homeassistant.components.climate import ClimateEntity
 
@@ -52,6 +53,7 @@ class AiotClimateEntity(AiotEntityBase, ClimateEntity):
     """
 
     def __init__(self, hass, device, res_params, channel=None, **kwargs):
+        # _LOGGER.warning(f" Init Climate {channel} {device.toJSON()} {res_params} {kwargs}")
         AiotEntityBase.__init__(self, hass, device, res_params, TYPE, channel, **kwargs)
         self._attr_hvac_modes = kwargs.get("hvac_modes")
         self._attr_temperature_unit = kwargs.get("unit_of_measurement")
