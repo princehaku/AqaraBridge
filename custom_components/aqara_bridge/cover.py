@@ -30,22 +30,22 @@ class AiotCoverEntity(AiotEntityBase, CoverEntity):
         self._attr_is_closed = None
 
     async def async_open_cover(self, **kwargs):
-        return await super().async_open_cover(**kwargs)
+        await self.async_set_resource("position", 100)
 
     async def async_close_cover(self, **kwargs):
-        return await super().async_close_cover(**kwargs)
+        await self.async_set_resource("position", 0)
 
     async def async_set_cover_position(self, **kwargs):
-        return await super().async_set_cover_position(**kwargs)
+        await self.async_set_resource("position", kwargs.get("position"))
 
     async def async_stop_cover(self, **kwargs):
-        return await super().async_stop_cover(**kwargs)
+        await self.async_set_resource("curtain_state", 2)
 
     async def async_open_cover_tilt(self, **kwargs):
-        return await super().async_open_cover_tilt(**kwargs)
+        await super().async_open_cover_tilt(**kwargs)
 
     async def async_close_cover_tilt(self, **kwargs):
-        return await super().async_close_cover_tilt(**kwargs)
+        await super().async_close_cover_tilt(**kwargs)
 
     async def async_set_cover_tilt_position(self, **kwargs):
         return await super().async_set_cover_tilt_position(**kwargs)
